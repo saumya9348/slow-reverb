@@ -1,0 +1,11 @@
+Flask
+Flask-WTF
+numpy
+pytube
+soundfile
+requests
+pedalboard
+Werkzeug
+moviepy
+pip==23.2.1
+Gunicorn
