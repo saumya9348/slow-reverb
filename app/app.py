@@ -1,10 +1,16 @@
-from flask import Flask,request,send_file,jsonify
+from flask import Flask,request,send_file,jsonify,Response
 import os
 import datetime
 import time
 from werkzeug.utils import secure_filename
 import logging
 from threading import Timer
+
+# for yt link to its data
+import re
+import json
+import requests
+from bs4 import BeautifulSoup
 
 
 app = Flask(__name__,static_folder='uploads')
@@ -16,7 +22,9 @@ def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-@app.route("/",methods=['GET'])
+def getUnixTimeStamp():
+    return str(time.mktime(datetime.datetime.now().timetuple()))
+
 def hello_world():
     if request.method == 'POST':
         print(request.files["song"].filename)
@@ -27,9 +35,46 @@ def hello_world():
     
     return "SuccessFull upload of file"
 
-@app.route("/hello",methods=['GET'])
+@app.route("/ping",methods=['GET'])
 def hello_world2():
-    return "Hello World"
+    return Response('{"message":"PONG"}',status=200,mimetype='application/json')
+
+@app.route("/yt-link-to-data",methods=['GET'])
+def youtubeLinkToData():
+    logging.info("started fetching data for youtube link")
+    body = request.get_json(force=True)
+    link = body["link"]
+    if link is None:
+        return Response('{"message":"Link not found"}',status=400,mimetype='application/json')
+    
+    pattern = r'^(https?://)?(www\.)?(youtube\.com/watch\?v=|youtu\.be/)([a-zA-Z0-9_-]+)(\S*)?$'
+    if not re.match(pattern, link):
+        return Response('{"message":"Invalid Link"}',status=400,mimetype='application/json')
+    
+
+    
+    ytDataFetched = BeautifulSoup(requests.get(link).content, "html.parser")
+    # We locate the JSON data using a regular-expression pattern
+    data = re.search(r"var ytInitialData = ({.*});", str(ytDataFetched)).group(1)
+    t = data.split("}}};")[0]
+    t = t+"}}}"
+    # This converts the JSON data to a python dictionary (dict)
+    json_data = json.loads(t)
+    data = json_data["contents"]["twoColumnWatchNextResults"]["results"]["results"]["contents"]
+    videoTitle =  data[0]["videoPrimaryInfoRenderer"]["title"]["runs"][0]["text"]
+    videoOwnerDetails = data[1]["videoSecondaryInfoRenderer"]["owner"]
+    channelName = videoOwnerDetails["videoOwnerRenderer"]["title"]["runs"][0]["text"]
+    videoOwnerThumbnailsArr = videoOwnerDetails["videoOwnerRenderer"]["thumbnail"]["thumbnails"]
+    videoOwnerThumbnails = [i["url"] for i in videoOwnerThumbnailsArr]
+
+    resData = {
+        "videoTitle":videoTitle,
+        "videoChannelName":channelName,
+        "videoOwnerThumbnails":videoOwnerThumbnails
+    }
+    json_data = json.dumps(resData)
+    logging.info("finished fetching data for youtube link")
+    return Response(json_data,status=200,mimetype='application/json')
 
 
 
@@ -96,7 +141,15 @@ def pedalBoardReverb():
 
 
 # will improve this later
+
 def effectChainsV0_0_1(source,destination):
+    """
+        It will take source and destination
+        @request source is the file which is to be effected
+        destination is the file which is to be saved
+        @return the file which is to be sent to the user. Ex : 123456789.mp3
+    """
+
     passthrough = Gain(gain_db=0)
 
     delay_and_pitch_shift = Pedalboard([
@@ -146,7 +199,7 @@ def youtubeToMusic():
         # audio = video.streams.filter(only_audio=True, file_extension='mp4').first()
         audio = video.streams.filter().first()
         out_file = audio.download()
-        unixTimeStamp = str(time.mktime(datetime.datetime.now().timetuple()))
+        unixTimeStamp = getUnixTimeStamp()
         new_file = out_file+ unixTimeStamp + '.mp4'
         os.rename(out_file, new_file)
         clip = mp.AudioFileClip(new_file)
@@ -155,7 +208,9 @@ def youtubeToMusic():
         createdFile = effectChainsV0_0_1(saveNewSongInternalLocation,f"uploads/{unixTimeStamp}")
         os.remove(new_file)
         os.remove(saveNewSongInternalLocation)
-    return send_file(createdFile, mimetype="audio/mp3")
+        tt = Timer(10.0, lambda: os.remove(f"uploads/{unixTimeStamp}.mp3"))
+        tt.start()
+    return send_file(f"../uploads/{unixTimeStamp}.mp3", mimetype="audio/mp3")
 
 @app.route("/yt-link-to-music",methods=['POST'])
 def youtubeLinkToMusic():
@@ -189,15 +244,18 @@ def youtubeLinkToMusic():
 @app.route("/music-to-reverb",methods=['POST'])
 def reverb_song():
     logging.info("reverb_song")
-    print("hello world",__name__)
-    time.sleep(31)
+    file = request.files["song"]
+    filename = ""
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
 
     requestedSong = request.files["song"]
-    unixTimeStamp = str(time.mktime(datetime.datetime.now().timetuple()))
+    unixTimeStamp = getUnixTimeStamp()
     createdFile = effectChainsV0_0_1(requestedSong,f"uploads/{unixTimeStamp}")
     tt = Timer(10.0, lambda: os.remove(createdFile))
     tt.start()
     return send_file("../"+createdFile, mimetype="audio/mp3")
+
 
 
 # if __name__=='__main__':

@@ -9,3 +9,4 @@ Werkzeug
 moviepy
 pip==23.2.1
 Gunicorn
+bs4
