@@ -246,15 +246,15 @@ def reverb_song():
     logging.info("reverb_song")
     file = request.files["song"]
     filename = ""
-    if file and allowed_file(file.filename):
-        filename = secure_filename(file.filename)
+    if not (file and allowed_file(file.filename)):
+        return Response('{"message":"Invalid File"}',status=400,mimetype='application/json')
 
     requestedSong = request.files["song"]
     unixTimeStamp = getUnixTimeStamp()
     createdFile = effectChainsV0_0_1(requestedSong,f"uploads/{unixTimeStamp}")
-    tt = Timer(10.0, lambda: os.remove(createdFile))
+    tt = Timer(10.0, lambda: os.remove(f"uploads/{unixTimeStamp}.mp3"))
     tt.start()
-    return send_file("../"+createdFile, mimetype="audio/mp3")
+    return send_file(f"../uploads/{unixTimeStamp}.mp3", mimetype="audio/mp3")
 
 
 
