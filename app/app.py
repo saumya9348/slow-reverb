@@ -67,10 +67,19 @@ def youtubeLinkToData():
     videoOwnerThumbnailsArr = videoOwnerDetails["videoOwnerRenderer"]["thumbnail"]["thumbnails"]
     videoOwnerThumbnails = [i["url"] for i in videoOwnerThumbnailsArr]
 
+    link = link.split("=")[1]
+    videoThumbnails = [f"https://img.youtube.com/vi/{link}/0.jpg"]
+    videoThumbnails.append(f"https://img.youtube.com/vi/{link}/1.jpg")
+    videoThumbnails.append(f"https://img.youtube.com/vi/{link}/2.jpg")
+    videoThumbnails.append(f"https://img.youtube.com/vi/{link}/3.jpg")
+    videoThumbnails.append(f"https://img.youtube.com/vi/{link}/sddefault.jpg")
+
+
     resData = {
         "videoTitle":videoTitle,
         "videoChannelName":channelName,
-        "videoOwnerThumbnails":videoOwnerThumbnails
+        "videoOwnerThumbnails":videoOwnerThumbnails,
+        "videoThumbnails":videoThumbnails
     }
     json_data = json.dumps(resData)
     logging.info("finished fetching data for youtube link")
@@ -79,65 +88,15 @@ def youtubeLinkToData():
 
 
 import soundfile as sf
-from pedalboard import Pedalboard, Compressor, Delay, Distortion, Gain, PitchShift, Reverb, Mix,Chorus
+from pedalboard import Pedalboard, Delay, Gain, PitchShift, Reverb
 from pedalboard.io import AudioFile
-from math import trunc
+from math import trunc,ceil
 import numpy as np
 from pytube import YouTube
 import moviepy.editor as mp
+import subprocess as sp
+from pydub import AudioSegment
 # def slowedReverb(audio, output, room_size = 0.75, damping = 0.5, wet_level = 0.08, dry_level = 0.2, delay = 2, slowfactor = 0.08):
-def slowedReverb(audio, output, room_size = 0.75, damping = 0.5, wet_level = 1.00, dry_level = 1, delay = 2, slowfactor = 0.08):
-    filename = audio
-    # if '.wav' not in audio:
-    #     print('Audio needs to be .wav! Converting...')
-    #     sp.call(f'ffmpeg -i "{audio}" tmp.wav', shell = True)
-    #     audio = 'tmp.wav'
-        
-    audio, sample_rate = sf.read(audio)
-    sample_rate -= trunc(sample_rate*slowfactor)
-
-    # Add reverb
-    board = Pedalboard([Reverb(
-        # room_size=room_size,
-        # damping=damping,
-        # wet_level=wet_level,
-        # dry_level=dry_level
-        )])
-
-
-    # Add surround sound effects
-    effected = board(audio, sample_rate)
-    channel1 = effected[:, 0]
-    channel2 = effected[:, 1]
-    shift_len = delay*1000
-    shifted_channel1 = np.concatenate((np.zeros(shift_len), channel1[:-shift_len]))
-    combined_signal = np.hstack((shifted_channel1.reshape(-1, 1), channel2.reshape(-1, 1)))
-
-
-    #write outfile
-    sf.write(output, effected)
-    # sf.write(output, combined_signal, sample_rate)
-    print(f"Converted {filename}")
-
-
-def pedalBoardReverb():
-    board = Pedalboard([Chorus(), Reverb(room_size=0.25)])
-
-# Open an audio file for reading, just like a regular file:
-    with AudioFile('uploads/1697044831.0.wav') as f:
-
-  # Open an audio file to write to:
-        with AudioFile('output.wav', 'w', f.samplerate, f.num_channels) as o:
-
-        # Read one second of audio at a time, until the file is empty:
-            while f.tell() < f.frames:
-                chunk = f.read(f.samplerate)
-
-                # Run the audio through our pedalboard:
-                effected = board(chunk, f.samplerate, reset=False)
-
-                # Write the output to our output file:
-                o.write(effected)
 
 
 # will improve this later
@@ -210,22 +169,10 @@ def youtubeToMusic():
         createdFile = effectChainsV0_0_1(saveNewSongInternalLocation,f"uploads/{unixTimeStamp}")
         os.remove(new_file)
         os.remove(saveNewSongInternalLocation)
-        fx = (
-            # AudioEffectsChain()
-            # .reverb(wet_gain=2, wet_only=True)
-            # .phaser()
-            # .delay(.9)
-            # .lowpass(1000)
-            AudioEffectsChain()
-            .delay(.9)
-            .reverb(wet_gain=2,pre_delay=1)
-        )
         newLoc = f"uploads/{unixTimeStamp}tp.mp3"
-        fx(f"uploads/{unixTimeStamp}.mp3", f"{newLoc}")
-        os.remove(f"uploads/{unixTimeStamp}.mp3")
-        tt = Timer(120.0, lambda: os.remove(f"{newLoc}"))
+        tt = Timer(40.0, lambda: os.remove(f"uploads/{unixTimeStamp}.mp3"))
         tt.start()
-    return send_file(f"../{newLoc}", mimetype="audio/mp3")
+    return send_file(f"../uploads/{unixTimeStamp}.mp3", mimetype="audio/mp3")
 
 @app.route("/yt-link-to-music",methods=['POST'])
 def youtubeLinkToMusic():
@@ -251,7 +198,7 @@ def youtubeLinkToMusic():
         # 'file_data': send_file(file_path, as_attachment=True)
         # }
         # return jsonify(return_data)
-        tt = Timer(120.0, lambda: os.remove(f"uploads/{unixTimeStamp}.mp3"))
+        tt = Timer(40.0, lambda: os.remove(f"uploads/{unixTimeStamp}.mp3"))
         tt.start()
         # Timer(10.0, lambda: os.remove(f"../uploads/{unixTimeStamp}.mp3")
     return send_file(f"../uploads/{unixTimeStamp}.mp3", mimetype="audio/mp3")
@@ -279,13 +226,137 @@ def reverb_song():
     #     .reverb(wet_gain=2, wet_only=True)
     # )
     # fx("1697347124.0.mp3", "1697347124.mp3")
-    tt = Timer(120.0, lambda: os.remove(f"uploads/{unixTimeStamp}.mp3"))
+    tt = Timer(40.0, lambda: os.remove(f"uploads/{unixTimeStamp}.mp3"))
     tt.start()
     return send_file(f"../uploads/{unixTimeStamp}.mp3", mimetype="audio/mp3")
 
 
 
-# if __name__=='__main__':
-#     logging.info("Server started")
-#     print("hello world",__name__)
-#     app.run(debug=True)
+mappingUserReqToSlowed = {
+    "1":0.09,
+    "2":0.10,
+    "3":0.11,
+    "4":0.12,
+    "5":0.13,
+    "6":0.14,
+    "7":0.15,
+    "8":0.16,
+    "9":0.17,
+    "10":0.18,
+}
+
+@app.route("/music-to-slowed-reverb",methods=['POST'])
+def slowedAndReverb():
+    logging.info("reverb_song")
+    print("reverb_song")
+    # check if the post request has the file part
+    if "song" not in request.files :
+        return Response('{"message":"File not found"}',status=400,mimetype='application/json')
+    
+    file = request.files["song"]
+    if not (file and allowed_file(file.filename)):
+        return Response('{"message":"Invalid File"}',status=400,mimetype='application/json')
+    
+    
+    unixTimeStamp = getUnixTimeStamp()
+    requestedSong = request.files["song"]
+
+
+    uploadedFileRename = f"uploads/{unixTimeStamp}.wav"
+    requestedSong.save(uploadedFileRename)
+
+    f = sf.SoundFile(uploadedFileRename)
+    videoLenInMin = ceil((f.frames / f.samplerate)/60)
+
+    if videoLenInMin > 10:
+        return Response('{"message":"File is too long"}',status=400,mimetype='application/json')
+    
+    slowedReq = request.args.get('slowed')
+    slowFac = 0.08
+    if slowedReq is not None:
+        userSlowFacReq = mappingUserReqToSlowed.get(slowedReq)
+        if userSlowFacReq is not None:
+            slowFac = userSlowFacReq
+
+    slowedreverb(uploadedFileRename, unixTimeStamp,slowfactor=slowFac)
+    os.remove(uploadedFileRename)
+    tt = Timer(40.0, lambda: os.remove(f"{unixTimeStamp}sam.mp3"))
+    tt.start()
+    return send_file(f"../{unixTimeStamp}sam.mp3", mimetype="audio/mp3")
+
+def slowedreverb(audio, output, room_size = 0.75, damping = 0.5, wet_level = 0.08, dry_level = 0.2, delay = 2, slowfactor = 0.08):
+    print(f"Starting slow reverb... Room Size :{room_size} Damping :{damping} Wet Level :{wet_level} Dry Level :{dry_level} Delay :{delay} Slow Factor :{slowfactor}")
+    filename = audio
+    if '.wav' not in audio:
+        print('Audio needs to be .wav! Converting...')
+        sp.call(f'ffmpeg -i "{audio}" tmp.wav', shell = True)
+        audio = 'tmp.wav'
+        
+    audio, sample_rate = sf.read(audio)
+    sample_rate -= trunc(sample_rate*slowfactor)
+
+    # Add reverb
+    board = Pedalboard([Reverb(
+        room_size=room_size,
+        damping=damping,
+        wet_level=wet_level,
+        dry_level=dry_level
+        )])
+
+
+    # Add surround sound effects
+    effected = board(audio, sample_rate)
+    channel1 = effected[:, 0]
+    channel2 = effected[:, 1]
+    shift_len = delay*1000
+    shifted_channel1 = np.concatenate((np.zeros(shift_len), channel1[:-shift_len]))
+    combined_signal = np.hstack((shifted_channel1.reshape(-1, 1), channel2.reshape(-1, 1)))
+
+
+    #write outfile
+    sf.write(f"{output}.wav", combined_signal, sample_rate)
+    wav = AudioSegment.from_wav(f"{output}.wav")
+    wav.export(f"{output}sam.mp3", format="mp3")
+    os.remove(f"{output}.wav")
+    print(f"Converted {filename}")
+
+
+def change_file_extension_with_string_methods(filename, new_extension):
+    if '.' in filename:
+        name, old_extension = filename.rsplit('.', 1)
+        new_filename = name + '.' + new_extension
+    else:
+        new_filename = filename + '.' + new_extension
+    return new_filename
+
+
+
+def sam(wavFile):
+    """
+        @param wavFile: the path to the wav file
+    """
+    data, samplerate = sf.read(wavFile)
+    n = len(data) #the length of the arrays contained in data
+    Fs = samplerate #the sample rate
+    # Working with stereo audio, there are two channels in the audio data.
+    # Let's retrieve each channel seperately:
+    ch1 = np.array([data[i][0] for i in range(n)]) #channel 1
+    ch2 = np.array([data[i][1] for i in range(n)]) #channel 2
+    ch1_Fourier = np.fft.fft(ch1) #performing Fast Fourier Transform
+    abs_ch1_Fourier = np.absolute(ch1_Fourier[:n//2]) #the spectrum
+    eps = 1e-5 #the percentage of frequencies we keep
+    # Boolean array where each value indicates whether we keep the corresponding frequency
+    frequenciesToRemove = (1 - eps) * np.sum(abs_ch1_Fourier) < np.cumsum(abs_ch1_Fourier)
+    # The frequency for which we cut the spectrum
+    f0 = (len(frequenciesToRemove) - np.sum(frequenciesToRemove) )* (Fs / 2) / (n / 2)
+    wavCompressedFile = "audio_compressed.wav"
+    mp3CompressedFile = "audio_compressed.mp3"
+    #Then we define the downsampling factor
+    D = int(Fs / f0)
+    print("Downsampling factor : {}".format(D))
+    new_data = data[::D, :] #getting the downsampled data
+    #Writing the new data into a wav file
+    sf.write(wavCompressedFile, new_data, int(Fs / D), 'PCM_16')
+    #Converting back to mp3
+    audioCompressed = AudioSegment.from_wav(wavCompressedFile)
+    audioCompressed.export(mp3CompressedFile, format="mp3")
