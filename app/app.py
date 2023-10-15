@@ -252,7 +252,7 @@ def reverb_song():
     requestedSong = request.files["song"]
     unixTimeStamp = getUnixTimeStamp()
     createdFile = effectChainsV0_0_1(requestedSong,f"uploads/{unixTimeStamp}")
-    tt = Timer(10.0, lambda: os.remove(f"uploads/{unixTimeStamp}.mp3"))
+    tt = Timer(120.0, lambda: os.remove(f"uploads/{unixTimeStamp}.mp3"))
     tt.start()
     return send_file(f"../uploads/{unixTimeStamp}.mp3", mimetype="audio/mp3")
 
