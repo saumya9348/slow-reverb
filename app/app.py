@@ -223,7 +223,7 @@ def youtubeToMusic():
         newLoc = f"uploads/{unixTimeStamp}tp.mp3"
         fx(f"uploads/{unixTimeStamp}.mp3", f"{newLoc}")
         os.remove(f"uploads/{unixTimeStamp}.mp3")
-        tt = Timer(10.0, lambda: os.remove(f"{newLoc}"))
+        tt = Timer(120.0, lambda: os.remove(f"{newLoc}"))
         tt.start()
     return send_file(f"../{newLoc}", mimetype="audio/mp3")
 
@@ -251,7 +251,7 @@ def youtubeLinkToMusic():
         # 'file_data': send_file(file_path, as_attachment=True)
         # }
         # return jsonify(return_data)
-        tt = Timer(10.0, lambda: os.remove(f"uploads/{unixTimeStamp}.mp3"))
+        tt = Timer(120.0, lambda: os.remove(f"uploads/{unixTimeStamp}.mp3"))
         tt.start()
         # Timer(10.0, lambda: os.remove(f"../uploads/{unixTimeStamp}.mp3")
     return send_file(f"../uploads/{unixTimeStamp}.mp3", mimetype="audio/mp3")
