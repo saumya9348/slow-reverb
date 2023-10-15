@@ -193,7 +193,8 @@ def effectChainsV0_0_1(source,destination):
 @app.route("/yt-link-to-reverb",methods=['POST'])
 def youtubeToMusic():
     if request.method == 'POST':
-        url = request.form["url"]
+        body = request.get_json(force=True)
+        url = body["link"]
         video = YouTube(url)
         # any way mp4 is by default but im keeping here to make things simple!
         # audio = video.streams.filter(only_audio=True, file_extension='mp4').first()
@@ -215,7 +216,8 @@ def youtubeToMusic():
 @app.route("/yt-link-to-music",methods=['POST'])
 def youtubeLinkToMusic():
     if request.method == 'POST':
-        url = request.form["url"]
+        body = request.get_json(force=True)
+        url = body["link"]
         video = YouTube(url)
         # mp4 is by default but im keeping here to make things simple!
         mp4Audio = video.streams.filter().first().download()
