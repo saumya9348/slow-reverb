@@ -141,7 +141,7 @@ def pedalBoardReverb():
 
 
 # will improve this later
-
+from pysndfx import AudioEffectsChain
 def effectChainsV0_0_1(source,destination):
     """
         It will take source and destination
@@ -184,9 +184,10 @@ def effectChainsV0_0_1(source,destination):
     effected = board(audio, sample_rate)
     channel1 = effected[:, 0]
     channel2 = effected[:, 1]
-    shift_len = 5*1000
-    shifted_channel1 = np.concatenate((np.zeros(shift_len), channel1[:-shift_len]))
-    combined_signal = np.hstack((shifted_channel1.reshape(-1, 1), channel2.reshape(-1, 1)))
+    shift_len = 10*1000
+    print("channel1",channel1,"channel2",channel2,effected)
+    # shifted_channel1 = np.concatenate((np.zeros(shift_len), channel1[:-shift_len]))
+    combined_signal = np.hstack((channel1.reshape(-1, 1), channel2.reshape(-1, 1)))
     sf.write(f"{destination}.mp3",combined_signal,sample_rate)
     return f"{destination}.mp3"
 
@@ -209,9 +210,22 @@ def youtubeToMusic():
         createdFile = effectChainsV0_0_1(saveNewSongInternalLocation,f"uploads/{unixTimeStamp}")
         os.remove(new_file)
         os.remove(saveNewSongInternalLocation)
-        tt = Timer(10.0, lambda: os.remove(f"uploads/{unixTimeStamp}.mp3"))
+        fx = (
+            # AudioEffectsChain()
+            # .reverb(wet_gain=2, wet_only=True)
+            # .phaser()
+            # .delay(.9)
+            # .lowpass(1000)
+            AudioEffectsChain()
+            .delay(.9)
+            .reverb(wet_gain=2,pre_delay=1)
+        )
+        newLoc = f"uploads/{unixTimeStamp}tp.mp3"
+        fx(f"uploads/{unixTimeStamp}.mp3", f"{newLoc}")
+        os.remove(f"uploads/{unixTimeStamp}.mp3")
+        tt = Timer(10.0, lambda: os.remove(f"{newLoc}"))
         tt.start()
-    return send_file(f"../uploads/{unixTimeStamp}.mp3", mimetype="audio/mp3")
+    return send_file(f"../{newLoc}", mimetype="audio/mp3")
 
 @app.route("/yt-link-to-music",methods=['POST'])
 def youtubeLinkToMusic():
@@ -254,6 +268,17 @@ def reverb_song():
     requestedSong = request.files["song"]
     unixTimeStamp = getUnixTimeStamp()
     createdFile = effectChainsV0_0_1(requestedSong,f"uploads/{unixTimeStamp}")
+    # fx = (
+    #     # AudioEffectsChain()
+    #     # .reverb(wet_gain=2, wet_only=True)
+    #     # .phaser()
+    #     # .delay(.9)
+    #     # .lowpass(1000)
+    #     AudioEffectsChain()
+    #     .delay(.9)
+    #     .reverb(wet_gain=2, wet_only=True)
+    # )
+    # fx("1697347124.0.mp3", "1697347124.mp3")
     tt = Timer(120.0, lambda: os.remove(f"uploads/{unixTimeStamp}.mp3"))
     tt.start()
     return send_file(f"../uploads/{unixTimeStamp}.mp3", mimetype="audio/mp3")
