@@ -1,4 +1,5 @@
 Flask
+Flask-WTF
 numpy
 pytube
 soundfile
@@ -6,7 +7,12 @@ requests
 pedalboard
 Werkzeug
 moviepy
+pip==23.2.1
 Gunicorn
 bs4
-pydub
+pysndfx
+pedalboard==0.8.3
+soundfile==0.12.1
+numpy==1.26.0
 subprocess
+pydub

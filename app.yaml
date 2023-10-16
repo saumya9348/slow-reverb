@@ -1,5 +1,4 @@
-runtime: python
-env: flex
+runtime: python39
 entrypoint: gunicorn -b :$PORT --timeout 600 main:app
 
 runtime_config:
