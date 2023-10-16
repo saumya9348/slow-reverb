@@ -1,3 +1,4 @@
+bs4
 Flask
 Flask-WTF
 numpy
@@ -8,11 +9,8 @@ pedalboard
 Werkzeug
 moviepy
 pip==23.2.1
-Gunicorn
-bs4
-pysndfx
-pedalboard==0.8.3
-soundfile==0.12.1
-numpy==1.26.0
-subprocess
+pedalboard
+soundfile
 pydub
+Gunicorn==21.2.0
+pysndfx
