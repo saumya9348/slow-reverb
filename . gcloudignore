@@ -7,3 +7,5 @@ ENV_DIR
 .gcloudignore
 .git
 .gitignore
+env
+env/*

@@ -13,8 +13,8 @@ import requests
 from bs4 import BeautifulSoup
 
 
-app = Flask(__name__,static_folder='uploads')
-app.config['UPLOAD_FOLDER'] = 'uploads'
+app = Flask(__name__,static_folder='/tmp')
+app.config['UPLOAD_FOLDER'] = '/tmp'
 
 
 ALLOWED_EXTENSIONS = {'mp3', 'wav'}
@@ -35,15 +35,28 @@ def hello_world():
     
     return "SuccessFull upload of file"
 
-@app.route("/ping",methods=['GET'])
+@app.route("/ping",methods=['GET','POST'])
 def hello_world2():
+    if request.method == 'POST':
+        data = "sam.json"
+        # write requested json to file
+        with open(data, 'w') as outfile:
+            json.dump(request.get_json(force=True), outfile)
+        # read json from file
+        d = {}
+        with open(data) as json_file:
+            d = json.load(json_file)
+        # return json
+        return jsonify(d)
     return Response('{"message":"PONG"}',status=200,mimetype='application/json')
 
 @app.route("/yt-link-to-data",methods=['GET'])
 def youtubeLinkToData():
     logging.info("started fetching data for youtube link")
-    body = request.get_json(force=True)
-    link = body["link"]
+    link = request.args.get('url')
+    if link is None:
+        return Response('{"message":"Invalid Link"}',status=400,mimetype='application/json')
+
     if link is None:
         return Response('{"message":"Link not found"}',status=400,mimetype='application/json')
     
@@ -164,13 +177,13 @@ def youtubeToMusic():
         new_file = out_file+ unixTimeStamp + '.mp4'
         os.rename(out_file, new_file)
         clip = mp.AudioFileClip(new_file)
-        saveNewSongInternalLocation = f"uploads/{unixTimeStamp}.wav"
+        saveNewSongInternalLocation = f"/tmp/{unixTimeStamp}.wav"
         clip.write_audiofile(saveNewSongInternalLocation)
-        createdFile = effectChainsV0_0_1(saveNewSongInternalLocation,f"uploads/{unixTimeStamp}")
+        createdFile = effectChainsV0_0_1(saveNewSongInternalLocation,f"/uploads/{unixTimeStamp}")
         os.remove(new_file)
         os.remove(saveNewSongInternalLocation)
-        newLoc = f"uploads/{unixTimeStamp}tp.mp3"
-        tt = Timer(40.0, lambda: os.remove(f"uploads/{unixTimeStamp}.mp3"))
+        newLoc = f"/uploads/{unixTimeStamp}tp.mp3"
+        tt = Timer(40.0, lambda: os.remove(f"/uploads/{unixTimeStamp}.mp3"))
         tt.start()
     return send_file(f"../uploads/{unixTimeStamp}.mp3", mimetype="audio/mp3")
 
@@ -181,17 +194,18 @@ def youtubeLinkToMusic():
         url = body["link"]
         video = YouTube(url)
         # mp4 is by default but im keeping here to make things simple!
-        mp4Audio = video.streams.filter().first().download()
-        # for naming the file
         unixTimeStamp = str(time.mktime(datetime.datetime.now().timetuple()))
+        mp4Audio = video.streams.filter().first().download(f"/tmp/{unixTimeStamp}.mp4")
+        # for naming the file
         # converting mp4 to mp3
-        mp3Audio = f"uploads/{unixTimeStamp}.mp3"
+        mp3Audio = f"/tmp/{unixTimeStamp}.mp3"
         videoClip = mp.VideoFileClip(mp4Audio)
         audioClip = videoClip.audio
         audioClip.write_audiofile(mp3Audio)
         audioClip.close()
         videoClip.close()
         os.remove(mp4Audio)
+
         # file_path = os.path.join(f"../uploads", unixTimeStamp+".mp3")
         # return_data = {
         # 'res': "success",
