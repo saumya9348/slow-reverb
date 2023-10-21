@@ -30,19 +30,6 @@ FOLDER_DIR = "tmp"
 
 ALLOWED_EXTENSIONS = {'mp3', 'wav'}
 
-import signal
-import sys
-
-def sigterm_handler(signum, frame):
-    # Custom handling for SIGTERM
-    print("Received SIGTERM signal. Performing cleanup...")
-    time.sleep(5)
-    print("Received SIGTERM signal. Performing done...")
-    # Perform cleanup actions here
-    sys.exit(0)
-
-# Register the signal handler
-signal.signal(signal.SIGTERM, sigterm_handler)
 
 
 def allowed_file(filename):
