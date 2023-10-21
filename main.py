@@ -305,17 +305,27 @@ def slowedAndReverb():
     tt.start()
     return send_file(f"{FOLDER_DIR}/{unixTimeStamp}sam.mp3", mimetype="audio/mp3")
 
-def deleteFile(fileName):
-    try:
+def deleteFile(fileName,ext="mp3"):
+    if ext == "mp3":
+        try:
+            # Directory where you want to search for and delete .mp3 files
+            mp3_files = glob.glob(os.path.join(FOLDER_DIR, f"{fileName}.mp3"))
+            for mp3_file in mp3_files:
+                os.remove(mp3_file)
 
-        # Directory where you want to search for and delete .mp3 files
-        mp3_files = glob.glob(os.path.join(FOLDER_DIR, f"{fileName}.mp3"))
-        for mp3_file in mp3_files:
-            os.remove(mp3_file)
+            print("Deleted .mp3 files successfully")
+        except Exception as e:
+            print(str(e))
+    elif ext == "wav":
+        try:
+            # Directory where you want to search for and delete .mp3 files
+            mp3_files = glob.glob(os.path.join(FOLDER_DIR, f"{fileName}.wav"))
+            for mp3_file in mp3_files:
+                os.remove(mp3_file)
 
-        print("Deleted .mp3 files successfully")
-    except Exception as e:
-        print(str(e))
+            print("Deleted .mp3 files successfully")
+        except Exception as e:
+            print(str(e))
     print("Deleting folders ending with .mp4")
 
 def deleteVideoFile(fileName):
@@ -341,6 +351,8 @@ def slowedreverb(audio, output, room_size = 0.75, damping = 0.5, wet_level = 0.0
         audio = 'tmp.wav'
     print('Adding reverb...',0)
     audio, sample_rate = sf.read(audio)
+    # input actually name of the file
+    deleteFile(output,"wav")
     sample_rate -= trunc(sample_rate*slowfactor)
 
     # Add reverb
@@ -362,10 +374,10 @@ def slowedreverb(audio, output, room_size = 0.75, damping = 0.5, wet_level = 0.0
     print('Adding reverb...',3)
 
     #write outfile
-    sf.write(f"{FOLDER_DIR}/{output}.wav", combined_signal, sample_rate)
+    sf.write(f"{FOLDER_DIR}/{output}.flac", combined_signal, sample_rate, format='flac')
     print('Adding reverb...',4)
-    wav = AudioSegment.from_wav(f"{FOLDER_DIR}/{output}.wav")
-    os.remove(f"{FOLDER_DIR}/{output}.wav")
+    wav = AudioSegment.from_file(f"{FOLDER_DIR}/{output}.flac")
+    os.remove(f"{FOLDER_DIR}/{output}.flac")
     print("delete file")
     print('Adding reverb...',5,wav)
     try:
