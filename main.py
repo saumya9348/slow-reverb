@@ -29,6 +29,22 @@ app.config['UPLOAD_FOLDER'] = '/tmp'
 FOLDER_DIR = "tmp"
 
 ALLOWED_EXTENSIONS = {'mp3', 'wav'}
+
+import signal
+import sys
+
+def sigterm_handler(signum, frame):
+    # Custom handling for SIGTERM
+    print("Received SIGTERM signal. Performing cleanup...")
+    time.sleep(5)
+    print("Received SIGTERM signal. Performing done...")
+    # Perform cleanup actions here
+    sys.exit(0)
+
+# Register the signal handler
+signal.signal(signal.SIGTERM, sigterm_handler)
+
+
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -304,6 +320,7 @@ def slowedAndReverb():
 
 def deleteFile(fileName):
     try:
+
         # Directory where you want to search for and delete .mp3 files
         mp3_files = glob.glob(os.path.join(FOLDER_DIR, f"{fileName}.mp3"))
         for mp3_file in mp3_files:
@@ -361,10 +378,15 @@ def slowedreverb(audio, output, room_size = 0.75, damping = 0.5, wet_level = 0.0
     sf.write(f"{FOLDER_DIR}/{output}.wav", combined_signal, sample_rate)
     print('Adding reverb...',4)
     wav = AudioSegment.from_wav(f"{FOLDER_DIR}/{output}.wav")
-    print('Adding reverb...',5)
-    wav.export(f"{FOLDER_DIR}/{output}sam.mp3", format="mp3")
-    print('Adding reverb...',6)
     os.remove(f"{FOLDER_DIR}/{output}.wav")
+    print("delete file")
+    print('Adding reverb...',5,wav)
+    try:
+        wav.export(f"{FOLDER_DIR}/{output}sam.mp3", format="mp3")
+    except Exception as e:
+        print(str(e))
+        return
+    print('Adding reverb...',6)
     print('Adding reverb...',7)
     print(f"Converted {filename}")
 
@@ -408,3 +430,9 @@ def sam(wavFile):
     #Converting back to mp3
     audioCompressed = AudioSegment.from_wav(wavCompressedFile)
     audioCompressed.export(mp3CompressedFile, format="mp3")
+
+if __name__ == "__main__":
+    print("Starting server")
+    app.run(debug=True,request_timeout=1000)
+
+
