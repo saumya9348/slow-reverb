@@ -418,8 +418,8 @@ def sam(wavFile):
     audioCompressed = AudioSegment.from_wav(wavCompressedFile)
     audioCompressed.export(mp3CompressedFile, format="mp3")
 
-if __name__ == "__main__":
-    print("Starting server")
-    app.run(debug=True,request_timeout=1000)
+# if __name__ == "__main__":
+#     print("Starting server")
+#     app.run()
 
 
