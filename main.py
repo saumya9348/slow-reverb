@@ -31,6 +31,7 @@ FOLDER_DIR = "tmp"
 ALLOWED_EXTENSIONS = {'mp3', 'wav'}
 
 
+print("Starting server")
 
 def allowed_file(filename):
     return '.' in filename and \
@@ -374,10 +375,10 @@ def slowedreverb(audio, output, room_size = 0.75, damping = 0.5, wet_level = 0.0
     print('Adding reverb...',3)
 
     #write outfile
-    sf.write(f"{FOLDER_DIR}/{output}.flac", combined_signal, sample_rate, format='flac')
+    sf.write(f"{FOLDER_DIR}/{output}.wav", combined_signal, sample_rate, format='wav')
     print('Adding reverb...',4)
-    wav = AudioSegment.from_file(f"{FOLDER_DIR}/{output}.flac")
-    os.remove(f"{FOLDER_DIR}/{output}.flac")
+    wav = AudioSegment.from_file(f"{FOLDER_DIR}/{output}.wav")
+    os.remove(f"{FOLDER_DIR}/{output}.wav")
     print("delete file")
     print('Adding reverb...',5,wav)
     try:
