@@ -172,7 +172,6 @@ def effectChainsV0_0_1(source,destination):
 
 @app.route("/yt-link-to-reverb",methods=['POST'])
 def youtubeToMusic():
-    return Response('{"message":"Not Implemented"}',status=400,mimetype='application/json')
     if request.method == 'POST':
         body = request.get_json(force=True)
         url = body["link"]
@@ -187,13 +186,19 @@ def youtubeToMusic():
         clip = mp.AudioFileClip(new_file)
         saveNewSongInternalLocation = f"/tmp/{unixTimeStamp}.wav"
         clip.write_audiofile(saveNewSongInternalLocation)
-        createdFile = effectChainsV0_0_1(saveNewSongInternalLocation,f"/uploads/{unixTimeStamp}")
         os.remove(new_file)
+        slowedReq = request.args.get('slowed')
+        slowFac = 0.08
+        if slowedReq is not None:
+            userSlowFacReq = mappingUserReqToSlowed.get(slowedReq)
+            if userSlowFacReq is not None:
+                slowFac = userSlowFacReq
+
+        slowedreverb(saveNewSongInternalLocation, unixTimeStamp,slowfactor=slowFac)
         os.remove(saveNewSongInternalLocation)
-        newLoc = f"/uploads/{unixTimeStamp}tp.mp3"
-        tt = Timer(40.0, lambda: os.remove(f"/uploads/{unixTimeStamp}.mp3"))
+        tt = Timer(15.0, lambda: deleteFile(f"{unixTimeStamp}sam"))
         tt.start()
-    return send_file(f"../uploads/{unixTimeStamp}.mp3", mimetype="audio/mp3")
+        return send_file(f"{FOLDER_DIR}/{unixTimeStamp}sam.mp3", mimetype="audio/mp3")
 
 @app.route("/yt-link-to-music",methods=['POST'])  # done
 def youtubeLinkToMusic():
